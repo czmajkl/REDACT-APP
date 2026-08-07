@@ -308,6 +308,48 @@
     .topbar-actions{flex-direction:column;align-items:stretch;width:100%}
     .badge{min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:center}
     #btnGetTop{width:100%}
+    /* The editor is the page on a phone. Use the viewport for the photo and make every toolbar
+       row own its available width, instead of letting desktop-sized controls push the page wider. */
+    .stage{width:100%;padding:8px 0 14px;gap:10px;overflow:hidden}
+    .stage>.card,.stage>.warn{border-left:0;border-right:0}
+    .editor{width:100%;min-width:0;gap:10px}
+    .frame{width:100%;min-width:0;padding:8px 0;border-left:0;border-right:0}
+    .brackets{display:none}
+    .tools{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;margin:0 8px 9px}
+    .tgroup{min-width:0;gap:4px}
+    .tgroup>span{font-size:8.5px;letter-spacing:.14em}
+    .tbig{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+    .tbig button{min-width:0;justify-content:center;gap:5px;padding:8px 4px;font-size:11px;white-space:nowrap}
+    .tbig .tprev{width:16px;height:16px;flex:0 0 16px}
+    .tbig .k,.kbd{display:none}
+    .tmed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;min-width:0}
+    .tmed button,.tmed .tlabel{min-width:0;justify-content:center;padding:9px 3px;font-size:9.5px;
+      line-height:1.2;text-align:center;white-space:normal}
+    .tmed .tlabel{border-left:0;border-top:1px solid var(--line)}
+    .tmed button{border-bottom:1px solid var(--line)}
+    .thist{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));width:100%;gap:5px}
+    .thist button{min-width:0;padding:8px 3px;font-size:9px}
+    .canvas-wrap{width:100%;height:54svh;min-height:280px}
+    .firstrun{max-width:calc(100% - 20px);white-space:normal;text-align:center;font-size:9.5px}
+    .frame-foot{margin:8px 8px 0;gap:7px;font-size:9px}
+    .frame-foot>span{min-width:0;max-width:100%}
+    .frame-foot>span:first-child{overflow-wrap:anywhere}
+    .frame-foot>span:last-child{width:100%;display:grid!important;
+      grid-template-columns:auto minmax(0,1fr) 42px auto auto!important;gap:5px!important}
+    #rngZoom{width:100%!important;min-width:0}
+    .tool-read{font-size:9px;white-space:normal}
+    .minimap{right:6px;bottom:6px;padding:2px}
+    .minimap .cap{top:-12px;font-size:7px}
+    .actionbar{margin:0;padding:6px 8px;gap:6px}
+    .outinfo{gap:5px;font-size:9px}
+    .outinfo #outName,.outinfo .dim{display:none}
+    .outinfo .btn.sm{padding:6px 8px;font-size:9px}
+    .actbtns{gap:6px}
+    .actbtns .btn{padding:9px 7px;font-size:10.5px}
+    .panel{min-width:0;padding:0 8px;gap:10px}
+    .panel .card-b{padding:12px}
+    .row{min-width:0}
+    input[type=range]{width:100%;min-width:0;height:32px;touch-action:pan-y}
   }
 </style>
 </head>
@@ -513,8 +555,8 @@
           <p class="info hidden" id="info-format"><b>PNG</b> is lossless, so it adds no compression artefacts
             along the painted edges. <b>JPG</b> gives smaller files. Either way the saved file carries none of
             the metadata the camera wrote.</p>
-          <p class="info hidden" id="info-zoom">Zooms the photo only, the page never grows. Ctrl and the mouse wheel
-            work as well. Above 100 percent you see the real pixels rather than a smoothed guess, which is how you
+          <p class="info hidden" id="info-zoom">Zooms the photo only, the page never grows. Pinch with two fingers
+            on a phone; Ctrl and the mouse wheel work as well. Above 100 percent you see the real pixels rather than a smoothed guess, which is how you
             check that a mosaic really covers a line of text. When the photo no longer fits, an overview panel
             appears at the bottom right: the frame marks where you are and you can click or drag inside it to move.</p>
         </div>
@@ -708,7 +750,7 @@
               <p><b>Brush size</b> is the diameter in pixels of the original photo, not of the zoomed view, so a
                 stroke covers the same amount at any zoom. The first three quarters of the slider give fine control
                 from 4 to 60 px; the last quarter reaches 600 px. The ring on the cursor shows the real size.</p>
-              <p><b>Blur strength</b> maps linearly from 0 to 100 % onto the blur radius and starts at 20 %.
+              <p><b>Blur strength</b> maps linearly from 0 to 100 % onto the blur radius and starts at 70 %.
                 <b>Tile size</b> is the width of one mosaic tile. As a
                 rule of thumb a tile has to be at least a third of the height of the letters you want gone, otherwise
                 the word can still be read out of the pattern.</p>
@@ -741,7 +783,7 @@
      end PARKED -->
 
               <h4>Checking your work</h4>
-              <p>Zoom to four hundred percent with the slider, the Fit button or Ctrl and the wheel. Above one hundred
+              <p>Zoom to four hundred percent with the slider, the Fit button, a two-finger pinch on touchscreens or Ctrl and the wheel. Above one hundred
                 percent you see real pixels rather than a smoothed guess, which is the only honest way to tell whether
                 a mosaic covers a line of text. Once the photo no longer fits, an overview panel appears at the bottom
                 right: the frame shows where you are, and you can click or drag inside it to move.</p>
@@ -854,9 +896,9 @@ let sel = null, gdrag = null;
 let logos = [], logoIdx = -1, stampAlpha = 1;
 let pristine = null;               // the untouched photo, kept only once an overlay is locked in       // overlay images loaded this session, reused across the batch      // the rectangle being edited, and what is being dragged on it
 
-const brush = { effect: "blur", size: 40, strength: 3, blurPct: 20, soft: 55, tip: "round", color: "#111111" };
+const brush = { effect: "blur", size: 100, strength: 10.5, blurPct: 70, soft: 55, tip: "round", color: "#111111" };
 /* Blur strength is deliberately linear. The percentage maps directly to a radius scaled by the
-   shorter side of the source photograph, so 20 % has the same visual weight on small and large
+   shorter side of the source photograph, so 70 % has the same visual weight on small and large
    images. Zero leaves the source pixels unchanged; no colour layer is introduced. */
 const blurPx = pct => {
   const f = (img ? Math.min(img.width, img.height) : 700) / 700;
@@ -933,6 +975,8 @@ async function add(list) {
   if (!destChosen) $("cardDest").classList.remove("hidden");
   renderQueue();
   steps();
+  adjustTouched = false;
+  setAdjust(true);
   if (cur < 0) openNext();
 }
 
@@ -1235,7 +1279,7 @@ function syncPanel() {
   $("lblStrength").textContent = brush.effect === "mosaic" ? "Tile size" : "Blur strength";
   $("info-strength").textContent = brush.effect === "mosaic"
     ? "Width of each square tile in pixels of the original photograph."
-    : "Linear blur radius: 0 % leaves the pixels unchanged, 20 % is the default and 100 % is the strongest blur.";
+    : "Linear blur radius: 0 % leaves the pixels unchanged, 70 % is the default and 100 % is the strongest blur.";
 }
 function syncTool() {
   syncPanel();
@@ -1460,16 +1504,17 @@ function centerPoint() {
   const o = viewOrigin();
   return { x: o.x + view.width / zoom / 2, y: o.y + view.height / zoom / 2 };
 }
-function setZoom(pct, anchor) {
+function setZoom(pct, anchor, screen) {
   const keep = anchor || centerPoint();
   zoom = Math.max(.1, Math.min(4, pct / 100));
   const p = Math.round(zoom * 100);
   $("rngZoom").value = p; $("valZoom").textContent = p + " %";
   sizeCanvases();
   const wr = $("wrap"), v = viewport();
-  wr.scrollLeft = keep.x * zoom - v.w / 2;
-  wr.scrollTop = keep.y * zoom - v.h / 2;
-  placeCanvases(); paintView(); drawMap(true); drawCursor();
+  const focus = screen || { x: v.w / 2, y: v.h / 2 };
+  wr.scrollLeft = keep.x * zoom - focus.x;
+  wr.scrollTop = keep.y * zoom - focus.y;
+  placeCanvases(); paintView(); drawMap(); drawCursor();
 }
 function fit() {
   if (!img) return;
@@ -1760,7 +1805,8 @@ function drawMap(refresh) {
   const box = $("minimap"), need = mapNeeded();
   box.classList.toggle("hidden", !need);
   if (!need) return;
-  const s = Math.min(148 / composite.width, 112 / composite.height);
+  const phone = window.innerWidth <= 620;
+  const s = Math.min((phone ? 92 : 148) / composite.width, (phone ? 68 : 112) / composite.height);
   const w = Math.max(1, Math.round(composite.width * s)), h = Math.max(1, Math.round(composite.height * s));
   const mc = $("mapc");
   if (mc.width !== w || mc.height !== h) { mc.width = w; mc.height = h; refresh = true; }
@@ -2139,9 +2185,76 @@ function toImg(e) {
   const r = view.getBoundingClientRect(), o = viewOrigin();
   return { x: o.x + (e.clientX - r.left) / zoom, y: o.y + (e.clientY - r.top) / zoom };
 }
+/* Touch input has two distinct jobs: one finger edits, two fingers navigate. Keep the active
+   contacts ourselves because browser pinch zoom is disabled on the canvas; that lets the page stay
+   fixed while the photograph zooms around the point between the fingers. */
+const activeTouches = new Map();
+let touchGesture = false, pinch = null, pinchRaf = 0, touchRedoBackup = null;
+const touchAt = e => ({ x: e.clientX, y: e.clientY });
+function touchPair() { return [...activeTouches.values()].slice(0, 2); }
+function abortForPinch() {
+  let changed = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+  dirty = null;
+  if (live) {
+    const i = ops.indexOf(live);
+    if (i >= 0) ops.splice(i, 1);
+    live = null; changed = true;
+  }
+  if (gdrag && sel) {
+    if (gdrag.mode === "draw") {
+      const i = ops.indexOf(sel);
+      if (i >= 0) ops.splice(i, 1);
+      sel = null; changed = true;
+    } else if (gdrag.orig) {
+      Object.assign(sel, gdrag.orig); touch(sel); changed = true;
+    }
+  }
+  gdrag = null; ptr = null;
+  if (touchRedoBackup) {
+    redoOps.length = 0;
+    redoOps.push(...touchRedoBackup);
+  }
+  if (changed) rebuild();
+  afterEdit(); drawCursor();
+}
+function beginPinch() {
+  const pair = touchPair();
+  if (pair.length < 2) return;
+  abortForPinch();
+  const center = { x: (pair[0].x + pair[1].x) / 2, y: (pair[0].y + pair[1].y) / 2 };
+  pinch = {
+    distance: Math.max(1, Math.hypot(pair[1].x - pair[0].x, pair[1].y - pair[0].y)),
+    zoom, anchor: toImg({ clientX: center.x, clientY: center.y })
+  };
+}
+function queuePinch() {
+  if (pinchRaf) return;
+  pinchRaf = requestAnimationFrame(() => {
+    pinchRaf = 0;
+    const pair = touchPair();
+    if (!pinch || pair.length < 2) return;
+    const center = { x: (pair[0].x + pair[1].x) / 2, y: (pair[0].y + pair[1].y) / 2 };
+    const distance = Math.max(1, Math.hypot(pair[1].x - pair[0].x, pair[1].y - pair[0].y));
+    const wr = $("wrap"), r = wr.getBoundingClientRect();
+    setZoom(pinch.zoom * 100 * distance / pinch.distance, pinch.anchor,
+            { x: center.x - r.left, y: center.y - r.top });
+  });
+}
 view.addEventListener("pointerdown", e => {
   if (!img) return;
   view.setPointerCapture(e.pointerId);
+  if (e.pointerType === "touch") {
+    activeTouches.set(e.pointerId, touchAt(e));
+    if (activeTouches.size === 1) touchRedoBackup = redoOps.slice();
+    if (activeTouches.size >= 2) {
+      e.preventDefault();
+      touchGesture = true;
+      beginPinch();
+      return;
+    }
+    if (touchGesture) return;
+  }
   if (tool === "cursor") {
     const p = toImg(e);
     // anything already on the photo can be picked up again, which is the whole point of this tool
@@ -2168,6 +2281,10 @@ view.addEventListener("pointerdown", e => {
 });
 view.addEventListener("pointermove", e => {
   if (!img) return;
+  if (e.pointerType === "touch" && activeTouches.has(e.pointerId)) {
+    activeTouches.set(e.pointerId, touchAt(e));
+    if (touchGesture) { e.preventDefault(); queuePinch(); return; }
+  }
   ptr = toImg(e);
   if (gdrag && gdrag.mode === "pan") {
     const wr = $("wrap");
@@ -2191,7 +2308,9 @@ view.addEventListener("pointermove", e => {
   drawCursor();
   if (!live) return;
   const last = live.pts[live.pts.length - 1];
-  if (Math.hypot(ptr.x - last.x, ptr.y - last.y) < Math.max(1, live.size / 12)) return;
+  /* At a fitted mobile zoom, one image pixel can be a fraction of a screen pixel. Sampling at
+     least every two screen pixels avoids building thousands of invisible points during one drag. */
+  if (Math.hypot(ptr.x - last.x, ptr.y - last.y) < Math.max(2 / zoom, live.size / 10)) return;
   addPt(live, { x: ptr.x, y: ptr.y });
   const pad = reach(live);
   markDirty(clampBox(
@@ -2199,24 +2318,40 @@ view.addEventListener("pointermove", e => {
     Math.max(last.x, ptr.x) + pad, Math.max(last.y, ptr.y) + pad
   ));
 });
-["pointerup", "pointercancel", "pointerleave"].forEach(t => view.addEventListener(t, e => {
+function finishPointer(e) {
+  if (e.pointerType === "touch") {
+    activeTouches.delete(e.pointerId);
+    if (touchGesture) {
+      if (activeTouches.size < 2) pinch = null;
+      if (!activeTouches.size) {
+        touchGesture = false;
+        touchRedoBackup = null;
+        if (pinchRaf) { cancelAnimationFrame(pinchRaf); pinchRaf = 0; }
+      }
+      return;
+    }
+    touchRedoBackup = null;
+  }
   if (gdrag && gdrag.mode === "pan") {
     gdrag = null; view.style.cursor = "grab";
     return;
   }
-  if (gdrag && t !== "pointerleave") {
+  if (gdrag) {
     gdrag = null;
     if (sel && (Math.abs(sel.w) < 3 || Math.abs(sel.h) < 3)) dropSelected();
     else { if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } flushDirty(); afterEdit(); }
     return;
   }
-  if (t === "pointerleave" && !live) { ptr = null; drawCursor(); return; }
   if (!live) return;
   live = null;
   if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
   flushDirty();               // draw whatever the last frame did not get to
   afterEdit();
-}));
+}
+["pointerup", "pointercancel"].forEach(t => view.addEventListener(t, finishPointer));
+view.addEventListener("pointerleave", e => {
+  if (e.pointerType === "mouse" && !live && !gdrag) { ptr = null; drawCursor(); }
+});
 view.addEventListener("pointerenter", e => { ptr = toImg(e); drawCursor(); });
 function undo() {
   if (!ops.length) return;
@@ -2379,8 +2514,8 @@ async function giveApp() {
 }
 $("btnGetApp").addEventListener("click", giveApp);
 $("btnGetTop").addEventListener("click", giveApp);
-/* On a narrow screen the adjustments are folded away by default: the defaults are usually fine
-   and the photo plus the approve button matter more than a column of sliders. */
+/* Loading a batch always reveals its controls. A person can still fold them away afterwards, and
+   that explicit choice survives a resize or a phone rotation. */
 let adjustTouched = false;
 function setAdjust(open) {
   $("adjustBody").classList.toggle("hidden", !open);
@@ -2390,7 +2525,7 @@ $("btnAdjust").addEventListener("click", () => {
   adjustTouched = true;
   setAdjust($("adjustBody").classList.contains("hidden"));
 });
-function autoAdjust() { if (!adjustTouched) setAdjust(window.innerWidth > 1100); }
+function autoAdjust() { if (!adjustTouched) setAdjust(true); }
 window.addEventListener("resize", autoAdjust);
 autoAdjust();
 
