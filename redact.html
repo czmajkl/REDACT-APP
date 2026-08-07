@@ -529,15 +529,15 @@
                 <label>Brush size <span class="kbd">[</span> <span class="kbd">]</span>
                   <button class="i" data-for="info-size" aria-expanded="false" title="What this does">i</button></label>
                 <p class="info hidden" id="info-size">Diameter of the brush in pixels <b>of the original photo</b>,
-                  not of the zoomed view, so a stroke covers the same amount whatever the zoom. The ring around the
-                  cursor shows the real size.</p>
-                <div class="row"><input type="range" id="rngSize" min="8" max="600" /><span class="val" id="valSize"></span></div>
+                  not of this fitted view. The first three quarters of the slider cover 4–60 px for precise everyday
+                  work; the final quarter still reaches 600 px for very large photographs.</p>
+                <div class="row"><input type="range" id="rngSize" min="0" max="100" step="0.1" /><span class="val" id="valSize"></span></div>
               </div>
               <div class="grp" id="grpStrength">
                 <label><span id="lblStrength">Blur strength</span>
                   <button class="i" data-for="info-strength" aria-expanded="false" title="What this does">i</button></label>
                 <p class="info hidden" id="info-strength"></p>
-                <div class="row"><input type="range" id="rngStrength" min="4" max="150" /><span class="val" id="valStrength"></span></div>
+                <div class="row"><input type="range" id="rngStrength" min="0" max="100" /><span class="val" id="valStrength"></span></div>
               </div>
               <div class="grp hidden" id="grpColor">
                 <label>Fill colour
@@ -692,8 +692,10 @@
 
               <h4>The settings</h4>
               <p><b>Brush size</b> is the diameter in pixels of the original photo, not of the zoomed view, so a
-                stroke covers the same amount at any zoom. The ring on the cursor shows the real size.</p>
-              <p><b>Blur strength</b> is a percentage on a curve, so the settings that visibly change the picture get most of the slider and 100 % reaches eighty pixels. <b>Tile size</b> is the width of one mosaic tile. As a
+                stroke covers the same amount at any zoom. The first three quarters of the slider give fine control
+                from 4 to 60 px; the last quarter reaches 600 px. The ring on the cursor shows the real size.</p>
+              <p><b>Blur strength</b> maps linearly from 0 to 100 % onto the blur radius and starts at 20 %.
+                <b>Tile size</b> is the width of one mosaic tile. As a
                 rule of thumb a tile has to be at least a third of the height of the letters you want gone, otherwise
                 the word can still be read out of the pattern.</p>
               <p><b>Edge softness</b> fades the edge of a stroke or shape so it settles into the photo instead of
@@ -838,17 +840,39 @@ let sel = null, gdrag = null;
 let logos = [], logoIdx = -1, stampAlpha = 1;
 let pristine = null;               // the untouched photo, kept only once an overlay is locked in       // overlay images loaded this session, reused across the batch      // the rectangle being edited, and what is being dragged on it
 
-const brush = { effect: "blur", size: 140, strength: 25, blurPct: 55, soft: 55, tip: "round", color: "#111111" };
-/* Blur used to be set in raw pixels from 4 to 150, where everything above about 40 looked the same
-   and the useful part was squeezed into the first fifth of the slider. It is a percentage now, on a
-   curve, so most of the travel sits where the picture visibly changes. 100 % lands on 80 px. */
-/* The slider spans what used to be its first 40 %, because measurement showed everything above
-   that was already a uniform smear. It is also scaled by the size of the photo, so the same
-   percentage feels the same on a phone snapshot and on a 24 Mpx frame. Shown as 0 to 100 only. */
+const brush = { effect: "blur", size: 40, strength: 3, blurPct: 20, soft: 55, tip: "round", color: "#111111" };
+/* Blur strength is deliberately linear. The percentage maps directly to a radius scaled by the
+   shorter side of the source photograph, so 20 % has the same visual weight on small and large
+   images. Zero leaves the source pixels unchanged; no colour layer is introduced. */
 const blurPx = pct => {
   const f = (img ? Math.min(img.width, img.height) : 700) / 700;
-  return Math.max(2, Math.round((2 + 13 * (pct / 100)) * f));
+  const linear = Math.max(0, Math.min(100, pct)) / 100;
+  return Math.round(15 * linear * f * 10) / 10;
 };
+
+/* Most retouching happens below 60 px, but a linear 4–600 px slider makes that useful range only a
+   few millimetres wide. Give 75 % of the travel to 4–60 px, then use a smooth logarithmic tail to
+   retain the full 600 px maximum. */
+const BRUSH_MIN = 4, BRUSH_FINE_MAX = 60, BRUSH_MAX = 600, BRUSH_FINE_POS = 75;
+function sizeFromSlider(v) {
+  const p = Math.max(0, Math.min(100, v));
+  if (p <= BRUSH_FINE_POS) {
+    return Math.round(BRUSH_MIN + (BRUSH_FINE_MAX - BRUSH_MIN) * p / BRUSH_FINE_POS);
+  }
+  const t = (p - BRUSH_FINE_POS) / (100 - BRUSH_FINE_POS);
+  return Math.round(BRUSH_FINE_MAX * Math.pow(BRUSH_MAX / BRUSH_FINE_MAX, t));
+}
+function sliderFromSize(size) {
+  const s = Math.max(BRUSH_MIN, Math.min(BRUSH_MAX, size));
+  if (s <= BRUSH_FINE_MAX) {
+    return (s - BRUSH_MIN) / (BRUSH_FINE_MAX - BRUSH_MIN) * BRUSH_FINE_POS;
+  }
+  return BRUSH_FINE_POS + Math.log(s / BRUSH_FINE_MAX) / Math.log(BRUSH_MAX / BRUSH_FINE_MAX) * (100 - BRUSH_FINE_POS);
+}
+function syncSizeUI() {
+  $("rngSize").value = sliderFromSize(brush.size);
+  $("valSize").textContent = brush.size + " px";
+}
 const P = () => brush;
 const EFFECT_LABEL = { blur: "BLUR", mosaic: "MOSAIC", solid: "SOLID" };
 
@@ -1195,6 +1219,9 @@ function syncPanel() {
   $("grpSoft").classList.toggle("hidden", stampSel);
   $("grpEffect").dataset.dim = (tool === "erase" || stampSel) ? "1" : "0";
   $("lblStrength").textContent = brush.effect === "mosaic" ? "Tile size" : "Blur strength";
+  $("info-strength").textContent = brush.effect === "mosaic"
+    ? "Width of each square tile in pixels of the original photograph."
+    : "Linear blur radius: 0 % leaves the pixels unchanged, 20 % is the default and 100 % is the strongest blur.";
 }
 function syncTool() {
   syncPanel();
@@ -1204,15 +1231,16 @@ function syncTool() {
 function syncBrush() {
   const p = brush;
   segSet("segEffect", p.effect); segSet("segTip", p.tip);
-  $("rngSize").value = p.size; $("valSize").textContent = p.size + " px";
+  syncSizeUI();
   const r = $("rngStrength");
   if (p.effect === "mosaic") {
     r.min = 4; r.max = 120;
-    if (p.strength > 120) p.strength = 40;
+    if (p.strength < 4 || p.strength > 120) p.strength = 40;
     r.value = p.strength;
     $("valStrength").textContent = p.strength + " px";
   } else {
-    r.min = 1; r.max = 100;
+    r.min = 0; r.max = 100;
+    p.strength = blurPx(p.blurPct);
     r.value = p.blurPct;
     $("valStrength").textContent = p.blurPct + " %";
   }
@@ -1290,7 +1318,11 @@ function setColor(v) {
   $("prevSolid").style.background = v;
   updateRead(); applyToSel();
 }
-$("rngSize").addEventListener("input", e => { brush.size = +e.target.value; $("valSize").textContent = brush.size + " px"; updateRead(); drawCursor(); });
+$("rngSize").addEventListener("input", e => {
+  brush.size = sizeFromSlider(+e.target.value);
+  $("valSize").textContent = brush.size + " px";
+  updateRead(); drawCursor();
+});
 $("rngStrength").addEventListener("input", e => {
   const v = +e.target.value;
   if (brush.effect === "mosaic") {
@@ -1354,8 +1386,8 @@ document.addEventListener("keydown", e => {
   else if (e.key === "Enter" && sel) { e.preventDefault(); deselect(); }
   else if ((e.key === "Delete" || e.key === "Backspace") && sel) { e.preventDefault(); dropSelected(); }
   else if (e.key === "[" || e.key === "]") {
-    brush.size = Math.max(8, Math.min(600, Math.round(brush.size * (e.key === "[" ? .8 : 1.25))));
-    $("rngSize").value = brush.size; $("valSize").textContent = brush.size + " px"; updateRead(); drawCursor();
+    brush.size = Math.max(BRUSH_MIN, Math.min(BRUSH_MAX, Math.round(brush.size * (e.key === "[" ? .8 : 1.25))));
+    syncSizeUI(); updateRead(); drawCursor();
   }
 });
 
@@ -1566,9 +1598,9 @@ function layerFor(pairKey) {
        chosen to keep roughly ten pixels of blur inside the layer, which is a properly smooth gaussian,
        and it is capped so the layer never becomes too coarse to carry it. */
     const k = Math.max(1, Math.min(6, Math.round(s / 10)));
-    const sig = s / k;
+    const sig = Math.max(0.01, s / k);
     const dw = Math.max(1, Math.ceil(W / k)), dh = Math.max(1, Math.ceil(H / k));
-    const pad = Math.ceil(sig * 3.4);
+    const pad = Math.max(1, Math.ceil(sig * 3.4));
     const pe = scratch("pad", dw + pad * 2, dh + pad * 2);
     const pc = pe.x;
     pc.drawImage(source, 0, 0, W, H, pad, pad, dw, dh);
