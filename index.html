@@ -53,21 +53,21 @@
     touch-action:pan-y;user-select:none;cursor:ew-resize}
   .cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;
     pointer-events:none;user-select:none;-webkit-user-drag:none}
-  .cmp .after{clip-path:inset(0 0 0 var(--p,45%))}
+  .cmp .after{clip-path:inset(0 0 0 var(--p,50%))}
   .cmp .lbl{position:absolute;top:12px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;
     text-transform:uppercase;padding:6px 10px;background:rgba(17,17,17,.72);color:var(--txt);pointer-events:none}
   .cmp .lbl.l{left:12px}
   .cmp .lbl.r{right:12px;color:var(--red-hi)}
-  .cmp .bar{position:absolute;top:0;bottom:0;width:2px;background:var(--red-hi);left:var(--p,45%);
+  .cmp .bar{position:absolute;top:0;bottom:0;width:2px;background:var(--red-hi);left:var(--p,50%);
     transform:translateX(-1px);pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
-  .cmp .grip{position:absolute;top:50%;left:var(--p,45%);width:44px;height:44px;margin:-22px 0 0 -22px;
+  .cmp .grip{position:absolute;top:50%;left:var(--p,50%);width:44px;height:44px;margin:-22px 0 0 -22px;
     border-radius:50%;background:var(--red-hi);border:2px solid #fff;pointer-events:none;
     display:flex;align-items:center;justify-content:center;box-shadow:0 3px 14px rgba(0,0,0,.5)}
   .cmp .grip::before{content:"";width:14px;height:14px;
     background:linear-gradient(90deg,#fff 0 3px,transparent 3px 5px,#fff 5px 8px,transparent 8px 10px,#fff 10px 13px)}
   .cmp-range{position:absolute;inset:0;z-index:5;width:100%;height:100%;margin:0;opacity:0;
     cursor:ew-resize;touch-action:pan-y}
-  .cmp:focus-within{outline:2px solid var(--red-hi);outline-offset:3px}
+  .cmp:has(.cmp-range:focus-visible) .grip{box-shadow:0 3px 14px rgba(0,0,0,.5),0 0 0 4px rgba(255,255,255,.45)}
   .reel-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:14px}
   .dots{display:flex;gap:7px}
   .dots button{width:26px;height:5px;padding:0;border:0;background:var(--line);cursor:pointer}
@@ -118,13 +118,13 @@
 
     <div class="reel">
       <div class="cmp" id="cmp">
-        <img id="imgBefore" src="img/3-before.webp" alt="Original photograph" width="1200" height="900" />
-        <img id="imgAfter" class="after" src="img/3-after.webp" alt="The same photograph with the faces covered" width="1200" height="900" />
+        <img id="imgBefore" src="img/1-before.webp" alt="Original photograph" width="1200" height="900" />
+        <img id="imgAfter" class="after" src="img/1-after.webp" alt="The same photograph with the faces covered" width="1200" height="900" />
         <span class="lbl l">Original</span>
         <span class="lbl r">Redacted</span>
         <span class="bar"></span>
         <span class="grip"></span>
-        <input class="cmp-range" id="cmpRange" type="range" min="0" max="100" value="45" step="0.1"
+        <input class="cmp-range" id="cmpRange" type="range" min="0" max="100" value="50" step="0.1"
                aria-label="Drag to compare the original with the redacted version" />
       </div>
       <div class="reel-foot">
@@ -191,8 +191,8 @@
 
   /* ---------- before and after ---------- */
   var PAIRS = [
-    { n: "3", cap: "Exercise, every face covered" },
     { n: "1", cap: "Ten conscripts in one frame" },
+    { n: "3", cap: "Exercise, every face covered" },
     { n: "2", cap: "Mosaic over the ground as well as the faces" },
     { n: "4", cap: "One soldier, one bar across the eyes" }
   ];
@@ -202,7 +202,7 @@
   var imgA = document.getElementById("imgAfter");
   var dots = document.getElementById("dots");
   var cap = document.getElementById("reelCap");
-  var idx = 0, p = 45, autoOn = !reduce, timer = null, raf = 0, dragging = false;
+  var idx = 0, p = 50, autoOn = !reduce, timer = null, raf = 0, dragging = false;
 
   function setP(v) {
     p = Math.max(0, Math.min(100, v));
@@ -222,7 +222,7 @@
   }
   function sweepIn() {                     // the redaction wipes in, so the difference is unmissable
     cancelAnimationFrame(raf);
-    var t0 = performance.now(), from = 100, to = 45, dur = 1100;
+    var t0 = performance.now(), from = 100, to = 50, dur = 1100;
     (function step(now) {
       var t = Math.min(1, ((now || performance.now()) - t0) / dur);
       setP(from + (to - from) * (1 - Math.pow(1 - t, 3)));
@@ -247,7 +247,7 @@
     var b = document.createElement("button");
     b.type = "button";
     b.setAttribute("aria-label", "Show example " + (k + 1));
-    b.addEventListener("click", function () { stopAuto(); show(k, false); setP(45); });
+    b.addEventListener("click", function () { stopAuto(); show(k, false); setP(50); });
     dots.appendChild(b);
   });
 
@@ -264,7 +264,7 @@
   });
 
   show(0, false);
-  setP(45);
+  setP(50);
   start();
 
   /* ---------- the wordmark redacts itself now and then ---------- */
