@@ -22,9 +22,9 @@
     --display:"Archivo Black","Arial Black",Impact,var(--sans);
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:16px;line-height:1.6;
+  body{margin:0;max-width:100%;overflow-x:hidden;background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:16px;line-height:1.6;
     -webkit-font-smoothing:antialiased}
-  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .wrap{width:100%;min-width:0;max-width:1080px;margin:0 auto;padding:0 24px}
   header{padding:56px 0 8px}
 
   /* the wordmark, with room for the canvas that redacts it now and then */
@@ -38,10 +38,10 @@
   .tag{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--txt-42);margin-top:14px}
   h1{font-size:clamp(24px,3.4vw,34px);line-height:1.25;letter-spacing:-.02em;margin:34px 0 0;max-width:20ch}
   .lede{font-size:17px;color:var(--txt-60);margin:16px 0 0;max-width:60ch}
-  .cta{display:flex;gap:12px;flex-wrap:wrap;margin:32px 0 8px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;min-width:0;max-width:100%;margin:32px 0 8px}
   .btn{display:inline-flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;
     font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:16px 26px;cursor:pointer;
-    text-decoration:none;border:1px solid var(--red);background:var(--red);color:#fff}
+    max-width:100%;text-align:center;white-space:normal;text-decoration:none;border:1px solid var(--red);background:var(--red);color:#fff}
   .btn:hover{background:#CE1230;border-color:#CE1230}
   .btn.ghost{background:transparent;color:var(--txt);border-color:var(--line)}
   .btn.ghost:hover{border-color:var(--txt-42);background:rgba(255,255,255,.05)}
@@ -91,11 +91,23 @@
   footer a{color:var(--txt);text-decoration:none;border-bottom:1px solid var(--red)}
   footer a:hover{color:var(--red-hi)}
   footer p{margin:0 0 8px;max-width:78ch;line-height:1.65}
+  .support{padding-top:14px}
+  footer .coffee{display:inline-flex;align-items:center;justify-content:center;gap:10px;max-width:100%;padding:12px 16px;
+    border:1px solid #c4432d;border-bottom:1px solid #c4432d;background:#c4432d;color:#fff;font-family:var(--mono);
+    font-size:12px;font-weight:600;line-height:1.35;letter-spacing:.02em;text-align:center;text-decoration:none}
+  footer .coffee:hover{border-color:#d6533d;background:#d6533d;color:#fff}
+  .coffee .cup{font-family:var(--sans);font-size:17px;line-height:1}
   .small{font-size:11.5px;line-height:1.6}
   a:focus-visible,.btn:focus-visible,.dots button:focus-visible{outline:2px solid var(--red-hi);outline-offset:3px}
   @media(max-width:640px){
+    .wrap{padding:0 16px}
+    header{padding-top:36px}
+    .cta{display:grid;grid-template-columns:minmax(0,1fr);width:100%;gap:10px;margin-top:26px}
+    .cta .btn{width:100%;padding:14px 16px}
+    .note{overflow-wrap:anywhere}
     .cmp .grip{width:52px;height:52px;margin:-26px 0 0 -26px}
     .reel-hint{margin-left:0;width:100%}
+    footer .coffee{width:100%}
   }
 </style>
 </head>
@@ -112,7 +124,7 @@
 
     <div class="cta">
       <a class="btn" href="redact.html">Open the tool</a>
-      <a class="btn ghost" href="redact.html" download>Download it, one file</a>
+      <a class="btn ghost" href="redact.html" download="redact.html">Download app</a>
     </div>
     <p class="note">Free to use &middot; works offline once downloaded &middot; about 1.6 MB</p>
 
@@ -180,6 +192,8 @@
     <p class="small">Bundled third party components keep their own licences and are excluded from the restriction
       above: HEIC decoding by libheif via libheif-js, under LGPL-3.0. Display typeface Archivo Black, under the SIL
       Open Font License 1.1.</p>
+    <p class="support"><a class="coffee" href="https://www.buymeacoffee.com/MichaelMilis" target="_blank"
+      rel="noopener noreferrer"><span class="cup" aria-hidden="true">☕</span><span>Like it? Buy me a coffee!</span></a></p>
   </footer>
 
 </div>
