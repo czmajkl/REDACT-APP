@@ -1,0 +1,19 @@
+# Cloudflare Pages configuration. Keep this file next to index.html.
+
+# HTML is revalidated on every visit, so an update reaches people immediately
+# while unchanged files still cost one tiny 304 response.
+/*.html
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+
+/
+  Cache-Control: no-cache
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+
+# Do not add a Content-Security-Policy here without testing the tool first.
+# The HEIC decoder is compiled at runtime, so any policy has to allow
+# 'wasm-unsafe-eval' and 'unsafe-eval', or opening a HEIC file will fail.
